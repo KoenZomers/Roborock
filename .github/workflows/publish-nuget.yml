@@ -1,0 +1,51 @@
+name: Publish NuGet Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version to publish (e.g. 0.1.0). Leave empty to use the version currently set in Library.csproj'
+        required: false
+        type: string
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    permissions:
+      id-token: write  # enable GitHub OIDC token issuance, required for NuGet Trusted Publishing
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+
+    - name: Restore dependencies
+      run: dotnet restore KoenZomers.RoboRock.slnx
+
+    - name: Build
+      run: dotnet build KoenZomers.RoboRock.slnx --configuration Release --no-restore /p:GeneratePackageOnBuild=false
+
+    - name: Test
+      run: dotnet test Tests\Tests.csproj --configuration Release --no-build --verbosity normal
+
+    - name: Pack (with specified version)
+      if: ${{ github.event.inputs.version != '' }}
+      run: dotnet pack Library\Library.csproj --configuration Release --no-build --output .\nupkg /p:PackageVersion=${{ github.event.inputs.version }} /p:Version=${{ github.event.inputs.version }}
+
+    - name: Pack (with version from csproj)
+      if: ${{ github.event.inputs.version == '' }}
+      run: dotnet pack Library\Library.csproj --configuration Release --no-build --output .\nupkg
+
+    - name: NuGet login (OIDC -> temp API key)
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
+    - name: Publish to NuGet
+      run: dotnet nuget push .\nupkg\*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
