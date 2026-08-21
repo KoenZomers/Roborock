@@ -1,0 +1,12 @@
+# Local Roborock test device configuration
+roborock.local.json
+**/roborock.local.json
+
+# Build output
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
