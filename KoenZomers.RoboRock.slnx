@@ -1,7 +1,11 @@
 <Solution>
-  <Folder Name="/Solution Items/">
+  <Folder Name="/Documentation/">
     <File Path="CHANGELOG.md" />
     <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Workflows/">
+    <File Path=".github/workflows/publish-nuget.yml" />
+    <File Path=".github/workflows/build.yml" />
   </Folder>
   <Project Path="Library/Library.csproj" />
   <Project Path="Tests/Tests.csproj" />
