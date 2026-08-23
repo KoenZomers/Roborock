@@ -38,4 +38,20 @@ public sealed class RoborockMapData
     /// <returns>The PNG-encoded map image bytes.</returns>
     /// <exception cref="InvalidDataException">Thrown when the map payload is not a valid RRMap image.</exception>
     public byte[] ToPng() => ToImage().PngContent;
+
+    /// <summary>
+    /// Gets the vacuum position embedded in the Roborock map payload.
+    /// </summary>
+    /// <returns>The vacuum position, or <see langword="null" /> when the map does not contain one.</returns>
+    /// <exception cref="InvalidDataException">Thrown when the map payload is not a valid RRMap file.</exception>
+    public RoborockMapPosition? GetVacuumPosition() => RoborockMapParser.GetVacuumPosition(Content);
+
+    /// <summary>
+    /// Resolves the room segment currently containing the vacuum from the Roborock map payload.
+    /// </summary>
+    /// <param name="roomMappings">Optional room segment to IoT room mappings returned by <c>get_room_mapping</c>.</param>
+    /// <returns>The current room, or <see langword="null" /> when the map does not contain a resolvable room.</returns>
+    /// <exception cref="InvalidDataException">Thrown when the map payload is not a valid RRMap file.</exception>
+    public RoborockCurrentRoom? GetCurrentRoom(IReadOnlyList<RoborockRoomMapping>? roomMappings = null) =>
+        RoborockMapParser.GetCurrentRoom(Content, roomMappings);
 }

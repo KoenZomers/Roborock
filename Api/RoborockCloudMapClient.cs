@@ -65,12 +65,35 @@ public sealed class RoborockCloudMapClient
     {
         ArgumentNullException.ThrowIfNull(metadataClient);
 
-        Task<RoborockMapImage> imageTask = GetMapImageAsync(cancellationToken);
+        Task<RoborockMapData> mapDataTask = GetRawMapDataAsync(cancellationToken);
         Task<RoborockStatus> statusTask = metadataClient.GetStatusAsync(cancellationToken);
         Task<IReadOnlyList<RoborockMapInfo>> mapsTask = metadataClient.GetMultiMapsAsync(cancellationToken);
+        Task<IReadOnlyList<RoborockRoomMapping>> roomMappingsTask = metadataClient.GetRoomMappingsAsync(cancellationToken);
 
-        await Task.WhenAll(imageTask, statusTask, mapsTask);
-        return RoborockMapImageWithMetadata.Create(imageTask.Result, statusTask.Result, mapsTask.Result);
+        await Task.WhenAll(mapDataTask, statusTask, mapsTask, roomMappingsTask);
+        RoborockMapData mapData = mapDataTask.Result;
+        return RoborockMapImageWithMetadata.Create(
+            mapData.ToImage(),
+            statusTask.Result,
+            mapsTask.Result,
+            mapData.GetCurrentRoom(roomMappingsTask.Result));
+    }
+
+    /// <summary>
+    /// Gets the room segment currently containing the vacuum through the cloud MQTT map channel.
+    /// </summary>
+    /// <param name="metadataClient">A connected local Roborock client used to retrieve <c>get_room_mapping</c>.</param>
+    /// <param name="cancellationToken">A token that can cancel the command.</param>
+    /// <returns>The current room, or <see langword="null" /> when the map does not contain a resolvable room.</returns>
+    public async Task<RoborockCurrentRoom?> GetCurrentRoomAsync(RoborockClient metadataClient, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(metadataClient);
+
+        Task<RoborockMapData> mapDataTask = GetRawMapDataAsync(cancellationToken);
+        Task<IReadOnlyList<RoborockRoomMapping>> roomMappingsTask = metadataClient.GetRoomMappingsAsync(cancellationToken);
+
+        await Task.WhenAll(mapDataTask, roomMappingsTask);
+        return mapDataTask.Result.GetCurrentRoom(roomMappingsTask.Result);
     }
 
     private async Task<byte[]> SendMapCommandAsync(

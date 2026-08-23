@@ -337,10 +337,31 @@ public sealed class RoborockClient : IAsyncDisposable
     {
         Task<RoborockStatus> statusTask = GetStatusAsync(cancellationToken);
         Task<IReadOnlyList<RoborockMapInfo>> mapsTask = GetMultiMapsAsync(cancellationToken);
-        Task<RoborockMapImage> imageTask = GetMapImageAsync(mapSecurityKey, cancellationToken);
+        Task<IReadOnlyList<RoborockRoomMapping>> roomMappingsTask = GetRoomMappingsAsync(cancellationToken);
+        Task<RoborockMapData> mapDataTask = GetRawMapDataAsync(mapSecurityKey, cancellationToken);
 
-        await Task.WhenAll(statusTask, mapsTask, imageTask);
-        return RoborockMapImageWithMetadata.Create(imageTask.Result, statusTask.Result, mapsTask.Result);
+        await Task.WhenAll(statusTask, mapsTask, roomMappingsTask, mapDataTask);
+        RoborockMapData mapData = mapDataTask.Result;
+        return RoborockMapImageWithMetadata.Create(
+            mapData.ToImage(),
+            statusTask.Result,
+            mapsTask.Result,
+            mapData.GetCurrentRoom(roomMappingsTask.Result));
+    }
+
+    /// <summary>
+    /// Gets the room segment currently containing the vacuum from the current Roborock map payload.
+    /// </summary>
+    /// <param name="mapSecurityKey">The Roborock RRiot <c>k</c> value used to decrypt map responses.</param>
+    /// <param name="cancellationToken">A token that can cancel the command.</param>
+    /// <returns>The current room, or <see langword="null" /> when the map does not contain a resolvable room.</returns>
+    public async Task<RoborockCurrentRoom?> GetCurrentRoomAsync(string mapSecurityKey, CancellationToken cancellationToken = default)
+    {
+        Task<IReadOnlyList<RoborockRoomMapping>> roomMappingsTask = GetRoomMappingsAsync(cancellationToken);
+        Task<RoborockMapData> mapDataTask = GetRawMapDataAsync(mapSecurityKey, cancellationToken);
+
+        await Task.WhenAll(roomMappingsTask, mapDataTask);
+        return mapDataTask.Result.GetCurrentRoom(roomMappingsTask.Result);
     }
 
     #endregion

@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 ## Next version
 
+## [0.3.2.0] - August 23, 2026
+
+- Added current room resolution from RRMap robot position and room segment pixels through `RoborockCurrentRoom`, `GetCurrentRoomAsync()` and `RoborockMapImageWithMetadata.CurrentRoom`.
+- Added rendered PNG coordinates to `RoborockMapPosition` so consumers can draw the vacuum on top of the map image.
+- Changed map rendering to crop to known map bounds and use transparent outside-map pixels instead of a solid background.
+
 ## [0.3.1.0] - August 23, 2026
 
 - Added a committed test configuration template with ignored local overrides for Roborock integration tests.

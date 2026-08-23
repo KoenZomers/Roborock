@@ -74,4 +74,24 @@ public sealed class RoborockMapInfoTests
         Assert.Same(image, result.Image);
         Assert.Same(maps, result.Maps);
     }
+
+    [Fact]
+    /// <summary>
+    /// Verifies that image metadata exposes the current room when provided.
+    /// </summary>
+    public void Create_WhenCurrentRoomProvided_ExposesCurrentRoom()
+    {
+        using JsonDocument statusDocument = JsonDocument.Parse("""{ "battery": 100, "map_status": 8 }""");
+        RoborockStatus status = RoborockStatus.FromJson(statusDocument.RootElement);
+        var image = new RoborockMapImage([1, 2, 3], 1, 1);
+        RoborockMapInfo[] maps = [new RoborockMapInfo { MapFlag = 2, Name = "Zolder" }];
+        var room = new RoborockCurrentRoom(16, "100001", new RoborockMapPosition(50, 0, 90));
+
+        RoborockMapImageWithMetadata result = RoborockMapImageWithMetadata.Create(image, status, maps, room);
+
+        RoborockCurrentRoom currentRoom = Assert.IsType<RoborockCurrentRoom>(result.CurrentRoom);
+        Assert.Same(room, currentRoom);
+        Assert.Equal(16, currentRoom.SegmentId);
+        Assert.Equal("100001", currentRoom.IotId);
+    }
 }

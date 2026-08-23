@@ -158,6 +158,12 @@ public sealed class RoborockLocalIntegrationTests
         Assert.NotEmpty(image.PngContent);
         Assert.NotNull(image.MapFlag);
         Assert.False(string.IsNullOrWhiteSpace(image.Name));
+        Assert.NotNull(image.CurrentRoom);
+        Assert.True(image.CurrentRoom.SegmentId > 0);
+        Assert.NotNull(image.CurrentRoom.VacuumPosition.RenderedX);
+        Assert.NotNull(image.CurrentRoom.VacuumPosition.RenderedY);
+        Assert.InRange(image.CurrentRoom.VacuumPosition.RenderedX.Value, 0, image.Width - 1);
+        Assert.InRange(image.CurrentRoom.VacuumPosition.RenderedY.Value, 0, image.Height - 1);
     }
 
     [Fact]

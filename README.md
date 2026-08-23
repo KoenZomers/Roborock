@@ -81,9 +81,14 @@ await File.WriteAllBytesAsync("roborock-map-direct.png", image.PngContent);
 
 RoborockMapImageWithMetadata namedImage = await client.GetMapImageWithMetadataAsync(mapSecurityKey: "your-rriot-k-value");
 Console.WriteLine($"Current map: {namedImage.MapFlag} {namedImage.Name}");
+Console.WriteLine($"Current room segment: {namedImage.CurrentRoom?.SegmentId}");
+Console.WriteLine($"Vacuum PNG position: {namedImage.CurrentRoom?.VacuumPosition.RenderedX}, {namedImage.CurrentRoom?.VacuumPosition.RenderedY}");
+
+RoborockCurrentRoom? currentRoom = await client.GetCurrentRoomAsync(mapSecurityKey: "your-rriot-k-value");
+Console.WriteLine($"Current room IoT id: {currentRoom?.IotId}");
 ```
 
-`GetRawMapDataAsync()` uses Roborock's protocol-301 map channel and needs the Roborock RRiot `k` value from account/session data to decrypt the map response. The returned bytes are decrypted and decompressed RRMap data. `ToPng()`, `ToImage()` and `GetMapImageAsync()` render that payload to PNG bytes without additional imaging dependencies. Devices that do not emit protocol-301 map payloads on the local TCP channel can time out on this local-only path.
+`GetRawMapDataAsync()` uses Roborock's protocol-301 map channel and needs the Roborock RRiot `k` value from account/session data to decrypt the map response. The returned bytes are decrypted and decompressed RRMap data. `ToPng()`, `ToImage()` and `GetMapImageAsync()` render that payload to PNG bytes without additional imaging dependencies, using transparent outside-map pixels and cropping the image to the known map bounds. `RoborockMapPosition.RenderedX` and `RenderedY` are pixel coordinates in that cropped PNG with the origin at the top-left corner, so they can be used directly to draw the vacuum on top of the rendered map. Devices that do not emit protocol-301 map payloads on the local TCP channel can time out on this local-only path.
 
 Home Assistant/python-roborock fetch map content through the cloud MQTT map RPC channel. Use `RoborockCloudMapClient` with the Roborock RRiot `u`, `s`, `k` and MQTT URL (`r.m`) values from account/session data to use the same route:
 
@@ -105,6 +110,11 @@ await using var metadataClient = new RoborockClient("192.168.1.50", "your-local-
 await metadataClient.ConnectAsync();
 RoborockMapImageWithMetadata namedCloudImage = await cloudMapClient.GetMapImageWithMetadataAsync(metadataClient);
 Console.WriteLine($"Current cloud map: {namedCloudImage.MapFlag} {namedCloudImage.Name}");
+Console.WriteLine($"Current cloud room segment: {namedCloudImage.CurrentRoom?.SegmentId}");
+Console.WriteLine($"Vacuum PNG position: {namedCloudImage.CurrentRoom?.VacuumPosition.RenderedX}, {namedCloudImage.CurrentRoom?.VacuumPosition.RenderedY}");
+
+RoborockCurrentRoom? currentCloudRoom = await cloudMapClient.GetCurrentRoomAsync(metadataClient);
+Console.WriteLine($"Current cloud room IoT id: {currentCloudRoom?.IotId}");
 ```
 
 For vacuums with a built-in camera, the library exposes the Roborock commands used by WebRTC/go2rtc integrations:

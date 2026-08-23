@@ -33,9 +33,10 @@ internal static class RoborockMapRenderer
     public static RoborockMapImage RenderPng(byte[] content)
     {
         ParsedImageBlock image = ParseImageBlock(content);
-        byte[] rgba = RenderRgba(image);
-        byte[] png = EncodePng(image.Width, image.Height, rgba);
-        return new RoborockMapImage(png, image.Width, image.Height);
+        RoborockMapImageBounds bounds = RoborockMapImageGeometry.GetContentBounds(image.Pixels, image.Width, image.Height);
+        byte[] rgba = RenderRgba(image, bounds);
+        byte[] png = EncodePng(bounds.Width, bounds.Height, rgba);
+        return new RoborockMapImage(png, bounds.Width, bounds.Height);
     }
 
     /// <summary>
@@ -162,20 +163,22 @@ internal static class RoborockMapRenderer
         checked((int)BinaryPrimitives.ReadUInt32LittleEndian(content.AsSpan(offset, 4)));
 
     /// <summary>
-    /// Converts RRMap image pixels to bottom-up RGBA image bytes.
+    /// Converts cropped RRMap image pixels to bottom-up RGBA image bytes.
     /// </summary>
     /// <param name="image">The parsed image block to render.</param>
+    /// <param name="bounds">The raw image bounds to render.</param>
     /// <returns>The rendered RGBA bytes.</returns>
-    private static byte[] RenderRgba(ParsedImageBlock image)
+    private static byte[] RenderRgba(ParsedImageBlock image, RoborockMapImageBounds bounds)
     {
-        byte[] rgba = new byte[checked(image.Width * image.Height * 4)];
-        for (int sourceY = 0; sourceY < image.Height; sourceY++)
+        byte[] rgba = new byte[checked(bounds.Width * bounds.Height * 4)];
+        for (int sourceY = bounds.Top; sourceY < bounds.Bottom; sourceY++)
         {
-            int targetY = image.Height - 1 - sourceY;
-            for (int x = 0; x < image.Width; x++)
+            int targetY = bounds.Height - 1 - (sourceY - bounds.Top);
+            for (int sourceX = bounds.Left; sourceX < bounds.Right; sourceX++)
             {
-                RgbaColor color = PixelToColor(image.Pixels[x + (sourceY * image.Width)]);
-                int offset = ((targetY * image.Width) + x) * 4;
+                RgbaColor color = PixelToColor(image.Pixels[sourceX + (sourceY * image.Width)]);
+                int targetX = sourceX - bounds.Left;
+                int offset = ((targetY * bounds.Width) + targetX) * 4;
                 rgba[offset] = color.R;
                 rgba[offset + 1] = color.G;
                 rgba[offset + 2] = color.B;
@@ -194,7 +197,7 @@ internal static class RoborockMapRenderer
     private static RgbaColor PixelToColor(byte value) =>
         value switch
         {
-            0x00 => new RgbaColor(19, 87, 148),
+            0x00 => new RgbaColor(255, 255, 255, 0),
             0x01 => new RgbaColor(100, 196, 254),
             0xff => new RgbaColor(32, 115, 185),
             0x07 => new RgbaColor(221, 221, 221),
