@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## Next version
+
+## [0.2.2.0] - August 23, 2026
+
+- Added a downloadable binary zip asset to GitHub Releases for users who cannot consume the NuGet package directly.
+
 ## [0.2.1.0] - August 23, 2026
 
 - Updated the release workflow to publish packages to GitHub Packages and create GitHub Releases using the matching changelog section as release notes.

@@ -58,6 +58,18 @@ jobs:
         $env:PackageReleaseNotes = Get-Content $env:RELEASE_NOTES_FILE -Raw
         dotnet pack Api\Api.csproj --configuration Release --no-build --output .\nupkg
 
+    - name: Create binary release asset
+      shell: pwsh
+      run: |
+        $publishOutput = Join-Path $env:GITHUB_WORKSPACE 'Api\bin\Release\net10.0'
+        if (-not (Test-Path $publishOutput)) {
+          throw "Build output folder was not found: $publishOutput"
+        }
+
+        $assetPath = Join-Path $env:GITHUB_WORKSPACE "KoenZomers.Roborock.Api-v${{ env.PACKAGE_VERSION }}.zip"
+        Compress-Archive -Path (Join-Path $publishOutput '*') -DestinationPath $assetPath -Force
+        "BINARY_RELEASE_ASSET=$assetPath" >> $env:GITHUB_ENV
+
     - name: NuGet login (OIDC -> temp API key)
       uses: NuGet/login@v1
       id: login
@@ -79,7 +91,7 @@ jobs:
         gh release view $tag *> $null
         if ($LASTEXITCODE -eq 0) {
           gh release edit $tag --title $tag --notes-file $env:RELEASE_NOTES_FILE
-          gh release upload $tag .\nupkg\*.nupkg --clobber
+          gh release upload $tag .\nupkg\*.nupkg $env:BINARY_RELEASE_ASSET --clobber
         } else {
-          gh release create $tag .\nupkg\*.nupkg --title $tag --notes-file $env:RELEASE_NOTES_FILE --target $env:GITHUB_SHA
+          gh release create $tag .\nupkg\*.nupkg $env:BINARY_RELEASE_ASSET --title $tag --notes-file $env:RELEASE_NOTES_FILE --target $env:GITHUB_SHA
         }
