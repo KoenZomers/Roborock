@@ -33,12 +33,12 @@ Console.WriteLine($"Last clean: {properties.LastCleanRecord?.BeginDateTime} - {p
 
 `GetDevicePropertiesAsync()` mirrors the local part of Home Assistant's Roborock diagnostics. It combines:
 
-- `get_status` for battery, current status, current clean time/area and error state.
+- `get_status` for battery, current status, current clean time/area, error state, current map flag, mop attachment, water-box attachment and water-shortage diagnostics.
 - `get_clean_summary` for total cleaning time, total area, total count and history record IDs.
 - `get_consumable` for brush/filter/sensor usage and calculated time-left values.
 - `get_clean_record` for the newest record from the clean summary.
 
-Home Assistant's room and floor names additionally use cloud home-data and map/room mapping, so those names are not fully available from these local status commands alone.
+Home Assistant derives the current room from parsed map content (`vacuum_room`) plus room metadata from `get_room_mapping`/cloud home data; it is not returned directly by `get_status`. This library exposes the current map flag through `RoborockStatus.CurrentMap` and typed room mappings through `GetRoomMappingsAsync()`, but room names still require account home-data from outside the local status command.
 
 Optional protocol diagnostics can be captured with a trace callback:
 
@@ -67,6 +67,7 @@ The library can fetch the map list, current room mapping, raw V1 map payload and
 ```csharp
 JsonElement maps = await client.GetMultiMapsListAsync();
 JsonElement rooms = await client.GetRoomMappingAsync();
+IReadOnlyList<RoborockRoomMapping> roomMappings = await client.GetRoomMappingsAsync();
 RoborockMapData map = await client.GetRawMapDataAsync(mapSecurityKey: "your-rriot-k-value");
 await File.WriteAllBytesAsync("roborock-map.bin", map.Content);
 await File.WriteAllBytesAsync("roborock-map.png", map.ToPng());
@@ -76,7 +77,7 @@ Console.WriteLine($"Map size: {image.Width}x{image.Height}, type: {image.Content
 await File.WriteAllBytesAsync("roborock-map-direct.png", image.PngContent);
 ```
 
-`GetRawMapDataAsync()` uses Roborock's protocol-301 map channel and needs the Roborock RRiot `k` value from account/session data to decrypt the map response. The returned bytes are decrypted and decompressed RRMap data. `ToPng()`, `ToImage()` and `GetMapImageAsync()` render that payload to PNG bytes without additional imaging dependencies.
+`GetRawMapDataAsync()` uses Roborock's protocol-301 map channel and needs the Roborock RRiot `k` value from account/session data to decrypt the map response. The returned bytes are decrypted and decompressed RRMap data. `ToPng()`, `ToImage()` and `GetMapImageAsync()` render that payload to PNG bytes without additional imaging dependencies. Home Assistant/python-roborock fetch map content through the cloud MQTT map RPC channel rather than the local TCP command channel; devices that do not emit protocol-301 map payloads locally can therefore still time out with this local-only client.
 
 For vacuums with a built-in camera, the library exposes the Roborock commands used by WebRTC/go2rtc integrations:
 

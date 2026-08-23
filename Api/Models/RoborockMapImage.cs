@@ -47,4 +47,24 @@ public sealed class RoborockMapImage
     /// Gets the MIME content type for <see cref="PngContent" />.
     /// </summary>
     public string ContentType => "image/png";
+
+    /// <summary>
+    /// Saves the PNG-encoded map image to disk.
+    /// </summary>
+    /// <param name="filePath">The path where the PNG image should be written.</param>
+    public void Save(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException("A file path must be provided.", nameof(filePath));
+        }
+
+        var directoryPath = Path.GetDirectoryName(filePath);
+        if (!string.IsNullOrEmpty(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+
+        File.WriteAllBytes(filePath, PngContent);
+    }
 }

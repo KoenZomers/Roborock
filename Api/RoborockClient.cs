@@ -26,6 +26,7 @@ public sealed class RoborockClient : IAsyncDisposable
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan HelloTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan MapCommandTimeout = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan PingTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan PingInterval = TimeSpan.FromSeconds(25);
     private const RoborockMessageProtocol CommandProtocol = RoborockMessageProtocol.GeneralRequest;
@@ -262,6 +263,17 @@ public sealed class RoborockClient : IAsyncDisposable
     public Task<JsonElement> GetRoomMappingAsync(CancellationToken cancellationToken = default) =>
         SendCommandAsync("get_room_mapping", cancellationToken: cancellationToken);
 
+    /// <summary>
+    /// Gets typed room mappings for the currently loaded map.
+    /// </summary>
+    /// <param name="cancellationToken">A token that can cancel the command.</param>
+    /// <returns>Room segment identifiers mapped to Roborock IoT room identifiers.</returns>
+    public async Task<IReadOnlyList<RoborockRoomMapping>> GetRoomMappingsAsync(CancellationToken cancellationToken = default)
+    {
+        JsonElement result = await GetRoomMappingAsync(cancellationToken);
+        return RoborockRoomMapping.FromJson(result);
+    }
+
     #endregion
 
     #region Maps
@@ -469,7 +481,7 @@ public sealed class RoborockClient : IAsyncDisposable
         CancellationToken cancellationToken)
     {
         using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(CommandTimeout);
+        timeout.CancelAfter(MapCommandTimeout);
 
         await _ioLock.WaitAsync(timeout.Token);
         try
@@ -531,7 +543,7 @@ public sealed class RoborockClient : IAsyncDisposable
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new TimeoutException($"Timed out waiting for Roborock map response to '{method}' after {CommandTimeout.TotalSeconds:n0} seconds.");
+            throw new TimeoutException($"Timed out waiting for Roborock map response to '{method}' after {MapCommandTimeout.TotalSeconds:n0} seconds.");
         }
         finally
         {

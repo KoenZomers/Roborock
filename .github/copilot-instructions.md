@@ -1,6 +1,6 @@
 # Copilot instructions
 
-When making notable changes that are not part of an explicitly requested version release, add the release note under `CHANGELOG.md` section `## Next version`. Do not add unreleased changes to the latest numbered version section.
+When making any source, documentation, configuration, or project metadata change that is not part of an explicitly requested version release, describe the change under the `CHANGELOG.md` section `## Next version`. Do not add unreleased changes to the latest numbered version section. Changes to this Copilot instructions file and GitHub Actions workflow definitions do not need to be described in the changelog.
 
 When asked to create a new version, update all required version files to the requested version before finishing the task.
 

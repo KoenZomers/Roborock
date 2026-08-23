@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## Next version
 
+## [0.3.0.0] - August 23, 2026
+
+- Added typed `get_status` diagnostics for mop attachment, water box attachment, water shortage, in-cleaning state and the current map flag.
+- Added typed `get_room_mapping` parsing through `RoborockRoomMapping` and `GetRoomMappingsAsync()`.
+- Documented that Home Assistant derives the current room from parsed map content plus room mappings, and that its map content retrieval uses the cloud MQTT map RPC channel rather than the local TCP command path.
+- Added a method to `RoborockMapImage` for saving rendered map images to disk.
+
 ## [0.2.2.0] - August 23, 2026
 
 - Added a downloadable binary zip asset to GitHub Releases for users who cannot consume the NuGet package directly.
