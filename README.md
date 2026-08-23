@@ -2,6 +2,8 @@
 
 Native C# local client for Roborock V1 vacuums such as the Roborock S6 MaxV.
 
+Note: I have created this so I can control my Roborock S6 MaxV vacuum cleaner from my own home automation software. I've tried to keep it as generic as possible, but this is my sole purpose. If it works for you as well, awesome, feel free to use it, if not, feel free to fork the code and try to make it work for yours.
+
 ## Change Log
 
 [Full version history](https://github.com/KoenZomers/Roborock/blob/main/CHANGELOG.md)
