@@ -29,10 +29,7 @@ jobs:
     - name: Test
       run: dotnet test Tests\Tests.csproj --configuration Release --no-build --verbosity normal
 
-    - name: Pack
-      run: dotnet pack Api\Api.csproj --configuration Release --no-build --output .\nupkg
-
-    - name: Read package version
+    - name: Read package version and release notes
       shell: pwsh
       run: |
         [xml]$project = Get-Content Api\Api.csproj
@@ -40,7 +37,26 @@ jobs:
         if ([string]::IsNullOrWhiteSpace($version)) {
           throw 'Api\Api.csproj does not define a Version value.'
         }
+
+        $changelog = Get-Content CHANGELOG.md -Raw
+        $versionPattern = [regex]::Escape($version)
+        $match = [regex]::Match($changelog, "(?ms)^## \[$versionPattern\][^`r`n]*(?:`r?`n)+(.*?)(?=^## \[|\z)")
+        if (-not $match.Success -or [string]::IsNullOrWhiteSpace($match.Groups[1].Value)) {
+          throw "CHANGELOG.md does not contain release notes for version $version."
+        }
+
+        $releaseNotes = $match.Groups[1].Value.Trim()
+        $releaseNotesPath = Join-Path $env:GITHUB_WORKSPACE 'release-notes.md'
+        [System.IO.File]::WriteAllText($releaseNotesPath, $releaseNotes + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
+
         "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
+        "RELEASE_NOTES_FILE=$releaseNotesPath" >> $env:GITHUB_ENV
+
+    - name: Pack
+      shell: pwsh
+      run: |
+        $env:PackageReleaseNotes = Get-Content $env:RELEASE_NOTES_FILE -Raw
+        dotnet pack Api\Api.csproj --configuration Release --no-build --output .\nupkg
 
     - name: NuGet login (OIDC -> temp API key)
       uses: NuGet/login@v1
@@ -62,7 +78,8 @@ jobs:
         $tag = "v${{ env.PACKAGE_VERSION }}"
         gh release view $tag *> $null
         if ($LASTEXITCODE -eq 0) {
+          gh release edit $tag --title $tag --notes-file $env:RELEASE_NOTES_FILE
           gh release upload $tag .\nupkg\*.nupkg --clobber
         } else {
-          gh release create $tag .\nupkg\*.nupkg --title $tag --notes "Release $tag" --target $env:GITHUB_SHA
+          gh release create $tag .\nupkg\*.nupkg --title $tag --notes-file $env:RELEASE_NOTES_FILE --target $env:GITHUB_SHA
         }
