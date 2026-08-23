@@ -133,6 +133,35 @@ public sealed class RoborockLocalIntegrationTests
 
     [Fact]
     /// <summary>
+    /// Verifies that a rendered map image can be retrieved through the cloud MQTT map channel used by Home Assistant.
+    /// </summary>
+    public async Task GetMapImageAsync_WhenCloudMapConfigConfigured_ReturnsPngImage()
+    {
+        if (!LocalRoborockTestConfig.RunIntegrationTests)
+        {
+            return;
+        }
+
+        LocalRoborockTestConfig config = LocalRoborockTestConfig.Load();
+        if (!config.HasCloudMapConfig)
+        {
+            return;
+        }
+
+        var client = new RoborockCloudMapClient(config.ToCloudConnectionOptions());
+        await using var metadataClient = new RoborockClient(config.Host, config.LocalKey, config.Duid);
+        await metadataClient.ConnectAsync();
+
+        RoborockMapImageWithMetadata image = await client.GetMapImageWithMetadataAsync(metadataClient);
+
+        Assert.Equal("image/png", image.ContentType);
+        Assert.NotEmpty(image.PngContent);
+        Assert.NotNull(image.MapFlag);
+        Assert.False(string.IsNullOrWhiteSpace(image.Name));
+    }
+
+    [Fact]
+    /// <summary>
     /// Verifies that camera status can be retrieved from a local Roborock device when integration tests are enabled.
     /// </summary>
     public async Task GetCameraStatusAsync_WhenIntegrationTestsEnabled_ReturnsCameraStatus()

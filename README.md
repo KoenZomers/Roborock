@@ -68,6 +68,7 @@ The library can fetch the map list, current room mapping, raw V1 map payload and
 
 ```csharp
 JsonElement maps = await client.GetMultiMapsListAsync();
+IReadOnlyList<RoborockMapInfo> mapInfos = await client.GetMultiMapsAsync();
 JsonElement rooms = await client.GetRoomMappingAsync();
 IReadOnlyList<RoborockRoomMapping> roomMappings = await client.GetRoomMappingsAsync();
 RoborockMapData map = await client.GetRawMapDataAsync(mapSecurityKey: "your-rriot-k-value");
@@ -77,9 +78,34 @@ await File.WriteAllBytesAsync("roborock-map.png", map.ToPng());
 RoborockMapImage image = await client.GetMapImageAsync(mapSecurityKey: "your-rriot-k-value");
 Console.WriteLine($"Map size: {image.Width}x{image.Height}, type: {image.ContentType}");
 await File.WriteAllBytesAsync("roborock-map-direct.png", image.PngContent);
+
+RoborockMapImageWithMetadata namedImage = await client.GetMapImageWithMetadataAsync(mapSecurityKey: "your-rriot-k-value");
+Console.WriteLine($"Current map: {namedImage.MapFlag} {namedImage.Name}");
 ```
 
-`GetRawMapDataAsync()` uses Roborock's protocol-301 map channel and needs the Roborock RRiot `k` value from account/session data to decrypt the map response. The returned bytes are decrypted and decompressed RRMap data. `ToPng()`, `ToImage()` and `GetMapImageAsync()` render that payload to PNG bytes without additional imaging dependencies. Home Assistant/python-roborock fetch map content through the cloud MQTT map RPC channel rather than the local TCP command channel; devices that do not emit protocol-301 map payloads locally can therefore still time out with this local-only client.
+`GetRawMapDataAsync()` uses Roborock's protocol-301 map channel and needs the Roborock RRiot `k` value from account/session data to decrypt the map response. The returned bytes are decrypted and decompressed RRMap data. `ToPng()`, `ToImage()` and `GetMapImageAsync()` render that payload to PNG bytes without additional imaging dependencies. Devices that do not emit protocol-301 map payloads on the local TCP channel can time out on this local-only path.
+
+Home Assistant/python-roborock fetch map content through the cloud MQTT map RPC channel. Use `RoborockCloudMapClient` with the Roborock RRiot `u`, `s`, `k` and MQTT URL (`r.m`) values from account/session data to use the same route:
+
+```csharp
+var cloudMapClient = new RoborockCloudMapClient(new RoborockCloudConnectionOptions
+{
+    Duid = "your-device-duid",
+    LocalKey = "your-local-key",
+    User = "your-rriot-u-value",
+    Secret = "your-rriot-s-value",
+    Key = "your-rriot-k-value",
+    MqttUrl = "ssl://mqtt-region.example:8883"
+});
+
+RoborockMapImage cloudImage = await cloudMapClient.GetMapImageAsync();
+cloudImage.Save("roborock-map-cloud.png");
+
+await using var metadataClient = new RoborockClient("192.168.1.50", "your-local-key", "your-device-duid");
+await metadataClient.ConnectAsync();
+RoborockMapImageWithMetadata namedCloudImage = await cloudMapClient.GetMapImageWithMetadataAsync(metadataClient);
+Console.WriteLine($"Current cloud map: {namedCloudImage.MapFlag} {namedCloudImage.Name}");
+```
 
 For vacuums with a built-in camera, the library exposes the Roborock commands used by WebRTC/go2rtc integrations:
 
@@ -103,7 +129,7 @@ JsonElement result = await client.SendCommandAsync("get_status");
 
 ## Tests
 
-The test project reads local device settings from `Tests\roborock.json`, which is committed with empty values to document the expected shape. Put machine-specific credentials in `Tests\roborock.local.json`; this file overrides the default config and is intentionally ignored by `.gitignore`. Add `mapSecurityKey` with the Roborock RRiot `k` value to enable the raw map payload integration test.
+The test project reads local device settings from `Tests\roborock.json`, which is committed with empty values to document the expected shape. Put machine-specific credentials in `Tests\roborock.local.json`; this file overrides the default config and is intentionally ignored by `.gitignore`. Add `mapSecurityKey` with the Roborock RRiot `k` value to enable the local raw map payload integration test. Add `rriotUser`, `rriotSecret`, `rriotKey` and `mqttUrl` to enable the cloud MQTT map integration test.
 
 Live tests are opt-in so normal test runs do not require the vacuum to be reachable:
 

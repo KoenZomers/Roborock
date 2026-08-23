@@ -256,6 +256,17 @@ public sealed class RoborockClient : IAsyncDisposable
         SendCommandAsync("get_multi_maps_list", cancellationToken: cancellationToken);
 
     /// <summary>
+    /// Gets typed multi-map metadata known by the vacuum.
+    /// </summary>
+    /// <param name="cancellationToken">A token that can cancel the command.</param>
+    /// <returns>Map flags and their friendly map names.</returns>
+    public async Task<IReadOnlyList<RoborockMapInfo>> GetMultiMapsAsync(CancellationToken cancellationToken = default)
+    {
+        JsonElement result = await GetMultiMapsListAsync(cancellationToken);
+        return RoborockMapInfo.FromJson(result);
+    }
+
+    /// <summary>
     /// Gets the room mapping for the currently loaded map.
     /// </summary>
     /// <param name="cancellationToken">A token that can cancel the command.</param>
@@ -314,6 +325,22 @@ public sealed class RoborockClient : IAsyncDisposable
     {
         RoborockMapData mapData = await GetRawMapDataAsync(mapSecurityKey, cancellationToken);
         return mapData.ToImage();
+    }
+
+    /// <summary>
+    /// Gets the current Roborock map rendered as PNG together with the matching multi-map metadata.
+    /// </summary>
+    /// <param name="mapSecurityKey">The Roborock RRiot <c>k</c> value used to decrypt map responses.</param>
+    /// <param name="cancellationToken">A token that can cancel the command.</param>
+    /// <returns>The rendered PNG map image and metadata for the currently selected map.</returns>
+    public async Task<RoborockMapImageWithMetadata> GetMapImageWithMetadataAsync(string mapSecurityKey, CancellationToken cancellationToken = default)
+    {
+        Task<RoborockStatus> statusTask = GetStatusAsync(cancellationToken);
+        Task<IReadOnlyList<RoborockMapInfo>> mapsTask = GetMultiMapsAsync(cancellationToken);
+        Task<RoborockMapImage> imageTask = GetMapImageAsync(mapSecurityKey, cancellationToken);
+
+        await Task.WhenAll(statusTask, mapsTask, imageTask);
+        return RoborockMapImageWithMetadata.Create(imageTask.Result, statusTask.Result, mapsTask.Result);
     }
 
     #endregion

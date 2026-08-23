@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using KoenZomers.RoboRock.Api.Models;
 
 namespace Tests;
 
@@ -19,6 +20,18 @@ internal sealed class LocalRoborockTestConfig
 
     [JsonPropertyName("mapSecurityKey")]
     public string? MapSecurityKey { get; init; }
+
+    [JsonPropertyName("rriotUser")]
+    public string? RriotUser { get; init; }
+
+    [JsonPropertyName("rriotSecret")]
+    public string? RriotSecret { get; init; }
+
+    [JsonPropertyName("rriotKey")]
+    public string? RriotKey { get; init; }
+
+    [JsonPropertyName("mqttUrl")]
+    public string? MqttUrl { get; init; }
 
     [JsonPropertyName("model")]
     public string Model { get; init; } = "";
@@ -74,9 +87,30 @@ internal sealed class LocalRoborockTestConfig
             Duid = UseLocalValue(local.Duid, defaults.Duid),
             LocalKey = UseLocalValue(local.LocalKey, defaults.LocalKey),
             MapSecurityKey = UseLocalValue(local.MapSecurityKey, defaults.MapSecurityKey),
+            RriotUser = UseLocalValue(local.RriotUser, defaults.RriotUser),
+            RriotSecret = UseLocalValue(local.RriotSecret, defaults.RriotSecret),
+            RriotKey = UseLocalValue(local.RriotKey, defaults.RriotKey),
+            MqttUrl = UseLocalValue(local.MqttUrl, defaults.MqttUrl),
             Model = UseLocalValue(local.Model, defaults.Model),
             Host = UseLocalValue(local.Host, defaults.Host),
             Port = local.Port > 0 ? local.Port : defaults.Port
+        };
+
+    public bool HasCloudMapConfig =>
+        !string.IsNullOrWhiteSpace(RriotUser) &&
+        !string.IsNullOrWhiteSpace(RriotSecret) &&
+        !string.IsNullOrWhiteSpace(RriotKey ?? MapSecurityKey) &&
+        !string.IsNullOrWhiteSpace(MqttUrl);
+
+    public RoborockCloudConnectionOptions ToCloudConnectionOptions() =>
+        new()
+        {
+            Duid = Duid,
+            LocalKey = LocalKey,
+            User = RriotUser ?? string.Empty,
+            Secret = RriotSecret ?? string.Empty,
+            Key = RriotKey ?? MapSecurityKey ?? string.Empty,
+            MqttUrl = MqttUrl ?? string.Empty
         };
 
     private static string UseLocalValue(string? localValue, string? defaultValue) =>

@@ -2,6 +2,10 @@
   "duid": "",
   "localKey": "",
   "mapSecurityKey": "",
+  "rriotUser": "",
+  "rriotSecret": "",
+  "rriotKey": "",
+  "mqttUrl": "",
   "model": "",
   "host": "",
   "port": 58867

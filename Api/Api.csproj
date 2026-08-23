@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>KoenZomers.Roborock</PackageId>
-    <Version>0.3.0.0</Version>
+    <Version>0.3.1.0</Version>
     <Description>Native C# local client for Roborock V1 vacuums.</Description>
     <Authors>Roborock</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -28,6 +28,10 @@
     <Compile Remove="Library.Tests\**" />
     <EmbeddedResource Remove="Library.Tests\**" />
     <None Remove="Library.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
   </ItemGroup>
 
 </Project>
