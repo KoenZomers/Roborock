@@ -1,6 +1,6 @@
 using System.Text.Json;
-using KoenZomers.RoboRock.Library;
-using KoenZomers.RoboRock.Library.Models;
+using KoenZomers.RoboRock.Api;
+using KoenZomers.RoboRock.Api.Models;
 
 namespace Tests;
 

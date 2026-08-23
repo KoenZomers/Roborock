@@ -9,9 +9,9 @@ Native C# local client for Roborock V1 vacuums such as the Roborock S6 MaxV.
 ## Usage
 
 ```csharp
-using KoenZomers.RoboRock.Library;
-using KoenZomers.RoboRock.Library.Enums;
-using KoenZomers.RoboRock.Library.Models;
+using KoenZomers.RoboRock.Api;
+using KoenZomers.RoboRock.Api.Enums;
+using KoenZomers.RoboRock.Api.Models;
 
 await using var client = new RoborockClient(
 	host: "192.168.1.50",
@@ -116,7 +116,7 @@ dotnet test
 - The `duid` is accepted for compatibility with Roborock V1 session data.
 - For the tested S6 MaxV path, commands are sent as DPS-wrapped local requests using `GENERAL_REQUEST`.
 - Time values from the device are exposed as `TimeSpan` values instead of raw seconds.
-- Numeric Roborock status values are exposed as enums in the `KoenZomers.RoboRock.Library.Enums` namespace where known.
+- Numeric Roborock status values are exposed as enums in the `KoenZomers.RoboRock.Api.Enums` namespace where known.
 
 ## Sources and thanks
 

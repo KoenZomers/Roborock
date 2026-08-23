@@ -2,11 +2,6 @@ name: Publish NuGet Package
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Package version to publish (e.g. 0.1.0). Leave empty to use the version currently set in Library.csproj'
-        required: false
-        type: string
 
 jobs:
   publish:
@@ -33,13 +28,8 @@ jobs:
     - name: Test
       run: dotnet test Tests\Tests.csproj --configuration Release --no-build --verbosity normal
 
-    - name: Pack (with specified version)
-      if: ${{ github.event.inputs.version != '' }}
-      run: dotnet pack Library\Library.csproj --configuration Release --no-build --output .\nupkg /p:PackageVersion=${{ github.event.inputs.version }} /p:Version=${{ github.event.inputs.version }}
-
-    - name: Pack (with version from csproj)
-      if: ${{ github.event.inputs.version == '' }}
-      run: dotnet pack Library\Library.csproj --configuration Release --no-build --output .\nupkg
+    - name: Pack
+      run: dotnet pack Api\Api.csproj --configuration Release --no-build --output .\nupkg
 
     - name: NuGet login (OIDC -> temp API key)
       uses: NuGet/login@v1

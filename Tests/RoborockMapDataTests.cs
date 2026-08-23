@@ -1,5 +1,5 @@
 using System.Buffers.Binary;
-using KoenZomers.RoboRock.Library.Models;
+using KoenZomers.RoboRock.Api.Models;
 
 namespace Tests;
 
