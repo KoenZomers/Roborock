@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file.
 
 ## Next version
 
+- Added a committed test configuration template with ignored local overrides for Roborock integration tests.
+
 ## [0.3.0.0] - August 23, 2026
 
 - Added typed `get_status` diagnostics for mop attachment, water box attachment, water shortage, in-cleaning state and the current map flag.

@@ -8,7 +8,8 @@ namespace Tests;
 /// </summary>
 internal sealed class LocalRoborockTestConfig
 {
-    public const string FileName = "roborock.local.json";
+    public const string FileName = "roborock.json";
+    public const string LocalFileName = "roborock.local.json";
 
     [JsonPropertyName("duid")]
     public string Duid { get; init; } = "";
@@ -39,12 +40,15 @@ internal sealed class LocalRoborockTestConfig
     /// </summary>
     public static LocalRoborockTestConfig Load()
     {
-        string path = FindConfigFile() ?? throw new FileNotFoundException(
-            $"Local Roborock test config '{FileName}' was not found. Create it in the Library.Tests folder.");
+        string directory = FindConfigDirectory() ?? throw new FileNotFoundException(
+            $"Roborock test config '{FileName}' was not found. Create it in the Tests folder.");
 
-        using FileStream stream = File.OpenRead(path);
-        LocalRoborockTestConfig config = JsonSerializer.Deserialize<LocalRoborockTestConfig>(stream, JsonOptions)
-            ?? throw new InvalidDataException($"Local Roborock test config '{path}' is empty or invalid.");
+        LocalRoborockTestConfig config = LoadFile(Path.Combine(directory, FileName));
+        string localPath = Path.Combine(directory, LocalFileName);
+        if (File.Exists(localPath))
+        {
+            config = Merge(config, LoadFile(localPath));
+        }
 
         config.Validate();
         return config;
@@ -57,24 +61,44 @@ internal sealed class LocalRoborockTestConfig
         AllowTrailingCommas = true
     };
 
+    private static LocalRoborockTestConfig LoadFile(string path)
+    {
+        using FileStream stream = File.OpenRead(path);
+        return JsonSerializer.Deserialize<LocalRoborockTestConfig>(stream, JsonOptions)
+            ?? throw new InvalidDataException($"Roborock test config '{path}' is empty or invalid.");
+    }
+
+    private static LocalRoborockTestConfig Merge(LocalRoborockTestConfig defaults, LocalRoborockTestConfig local) =>
+        new()
+        {
+            Duid = UseLocalValue(local.Duid, defaults.Duid),
+            LocalKey = UseLocalValue(local.LocalKey, defaults.LocalKey),
+            MapSecurityKey = UseLocalValue(local.MapSecurityKey, defaults.MapSecurityKey),
+            Model = UseLocalValue(local.Model, defaults.Model),
+            Host = UseLocalValue(local.Host, defaults.Host),
+            Port = local.Port > 0 ? local.Port : defaults.Port
+        };
+
+    private static string UseLocalValue(string? localValue, string? defaultValue) =>
+        string.IsNullOrWhiteSpace(localValue) ? defaultValue ?? "" : localValue;
+
     /// <summary>
-    /// Finds the local Roborock integration test configuration file.
+    /// Finds the Roborock integration test configuration directory.
     /// </summary>
-    private static string? FindConfigFile()
+    private static string? FindConfigDirectory()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
         while (directory is not null)
         {
-            string candidate = Path.Combine(directory.FullName, FileName);
-            if (File.Exists(candidate))
+            if (File.Exists(Path.Combine(directory.FullName, FileName)))
             {
-                return candidate;
+                return directory.FullName;
             }
 
-            string projectCandidate = Path.Combine(directory.FullName, "Library.Tests", FileName);
-            if (File.Exists(projectCandidate))
+            string testsCandidate = Path.Combine(directory.FullName, "Tests");
+            if (File.Exists(Path.Combine(testsCandidate, FileName)))
             {
-                return projectCandidate;
+                return testsCandidate;
             }
 
             directory = directory.Parent;
@@ -90,27 +114,27 @@ internal sealed class LocalRoborockTestConfig
     {
         if (string.IsNullOrWhiteSpace(Duid))
         {
-            throw new InvalidDataException("Config value 'duid' is required.");
+            throw new InvalidDataException($"Config value 'duid' is required. Set it in {LocalFileName}.");
         }
 
         if (string.IsNullOrWhiteSpace(LocalKey))
         {
-            throw new InvalidDataException("Config value 'localKey' is required.");
+            throw new InvalidDataException($"Config value 'localKey' is required. Set it in {LocalFileName}.");
         }
 
         if (string.IsNullOrWhiteSpace(Model))
         {
-            throw new InvalidDataException("Config value 'model' is required.");
+            throw new InvalidDataException($"Config value 'model' is required. Set it in {LocalFileName}.");
         }
 
         if (string.IsNullOrWhiteSpace(Host))
         {
-            throw new InvalidDataException("Config value 'host' is required.");
+            throw new InvalidDataException($"Config value 'host' is required. Set it in {LocalFileName}.");
         }
 
         if (Port <= 0)
         {
-            throw new InvalidDataException("Config value 'port' must be greater than zero.");
+            throw new InvalidDataException($"Config value 'port' must be greater than zero. Set it in {LocalFileName}.");
         }
     }
 }

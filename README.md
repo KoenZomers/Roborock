@@ -103,7 +103,7 @@ JsonElement result = await client.SendCommandAsync("get_status");
 
 ## Tests
 
-The test project reads local device settings from `Library.Tests/roborock.local.json`. This file contains local device credentials and is intentionally ignored by `.gitignore`. Add `mapSecurityKey` with the Roborock RRiot `k` value to enable the raw map payload integration test.
+The test project reads local device settings from `Tests\roborock.json`, which is committed with empty values to document the expected shape. Put machine-specific credentials in `Tests\roborock.local.json`; this file overrides the default config and is intentionally ignored by `.gitignore`. Add `mapSecurityKey` with the Roborock RRiot `k` value to enable the raw map payload integration test.
 
 Live tests are opt-in so normal test runs do not require the vacuum to be reachable:
 
