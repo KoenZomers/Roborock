@@ -4,7 +4,7 @@ Native C# local client for Roborock V1 vacuums such as the Roborock S6 MaxV.
 
 ## Change Log
 
-[Full version history](CHANGELOG.md)
+[Full version history](https://github.com/KoenZomers/Roborock/blob/main/CHANGELOG.md)
 
 ## Usage
 
