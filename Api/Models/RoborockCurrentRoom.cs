@@ -10,11 +10,13 @@ public sealed class RoborockCurrentRoom
     /// </summary>
     /// <param name="segmentId">The map segment identifier containing the vacuum.</param>
     /// <param name="iotId">The Roborock IoT room identifier matched through <c>get_room_mapping</c>, when available.</param>
+    /// <param name="name">The friendly room name matched through Roborock cloud home metadata, when available.</param>
     /// <param name="vacuumPosition">The vacuum position used to resolve the segment.</param>
-    public RoborockCurrentRoom(int segmentId, string? iotId, RoborockMapPosition vacuumPosition)
+    public RoborockCurrentRoom(int segmentId, string? iotId, string? name, RoborockMapPosition vacuumPosition)
     {
         SegmentId = segmentId;
         IotId = iotId;
+        Name = name;
         VacuumPosition = vacuumPosition ?? throw new ArgumentNullException(nameof(vacuumPosition));
     }
 
@@ -27,6 +29,11 @@ public sealed class RoborockCurrentRoom
     /// Gets the Roborock IoT room identifier matched through <c>get_room_mapping</c>, when available.
     /// </summary>
     public string? IotId { get; }
+
+    /// <summary>
+    /// Gets the friendly room name matched through Roborock cloud home metadata, when available.
+    /// </summary>
+    public string? Name { get; }
 
     /// <summary>
     /// Gets the vacuum position used to resolve the segment, including rendered PNG coordinates when available.

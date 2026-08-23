@@ -6,6 +6,11 @@
   "rriotSecret": "",
   "rriotKey": "",
   "mqttUrl": "",
+  "rriotHash": "",
+  "apiUrl": "",
+  "baseUrl": "",
+  "userToken": "",
+  "homeId": null,
   "model": "",
   "host": "",
   "port": 58867

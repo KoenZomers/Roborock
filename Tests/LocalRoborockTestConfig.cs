@@ -33,6 +33,21 @@ internal sealed class LocalRoborockTestConfig
     [JsonPropertyName("mqttUrl")]
     public string? MqttUrl { get; init; }
 
+    [JsonPropertyName("rriotHash")]
+    public string? RriotHash { get; init; }
+
+    [JsonPropertyName("apiUrl")]
+    public string? ApiUrl { get; init; }
+
+    [JsonPropertyName("baseUrl")]
+    public string? BaseUrl { get; init; }
+
+    [JsonPropertyName("userToken")]
+    public string? UserToken { get; init; }
+
+    [JsonPropertyName("homeId")]
+    public long? HomeId { get; init; }
+
     [JsonPropertyName("model")]
     public string Model { get; init; } = "";
 
@@ -91,6 +106,11 @@ internal sealed class LocalRoborockTestConfig
             RriotSecret = UseLocalValue(local.RriotSecret, defaults.RriotSecret),
             RriotKey = UseLocalValue(local.RriotKey, defaults.RriotKey),
             MqttUrl = UseLocalValue(local.MqttUrl, defaults.MqttUrl),
+            RriotHash = UseLocalValue(local.RriotHash, defaults.RriotHash),
+            ApiUrl = UseLocalValue(local.ApiUrl, defaults.ApiUrl),
+            BaseUrl = UseLocalValue(local.BaseUrl, defaults.BaseUrl),
+            UserToken = UseLocalValue(local.UserToken, defaults.UserToken),
+            HomeId = local.HomeId ?? defaults.HomeId,
             Model = UseLocalValue(local.Model, defaults.Model),
             Host = UseLocalValue(local.Host, defaults.Host),
             Port = local.Port > 0 ? local.Port : defaults.Port
@@ -102,6 +122,12 @@ internal sealed class LocalRoborockTestConfig
         !string.IsNullOrWhiteSpace(RriotKey ?? MapSecurityKey) &&
         !string.IsNullOrWhiteSpace(MqttUrl);
 
+    public bool HasCloudRoomConfig =>
+        HasCloudMapConfig &&
+        !string.IsNullOrWhiteSpace(RriotHash) &&
+        !string.IsNullOrWhiteSpace(ApiUrl) &&
+        (HomeId is not null || (!string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(UserToken)));
+
     public RoborockCloudConnectionOptions ToCloudConnectionOptions() =>
         new()
         {
@@ -110,7 +136,12 @@ internal sealed class LocalRoborockTestConfig
             User = RriotUser ?? string.Empty,
             Secret = RriotSecret ?? string.Empty,
             Key = RriotKey ?? MapSecurityKey ?? string.Empty,
-            MqttUrl = MqttUrl ?? string.Empty
+            MqttUrl = MqttUrl ?? string.Empty,
+            Hash = RriotHash,
+            ApiUrl = ApiUrl,
+            BaseUrl = BaseUrl,
+            UserToken = UserToken,
+            HomeId = HomeId
         };
 
     private static string UseLocalValue(string? localValue, string? defaultValue) =>

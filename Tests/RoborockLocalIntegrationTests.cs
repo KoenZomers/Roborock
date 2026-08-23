@@ -164,6 +164,10 @@ public sealed class RoborockLocalIntegrationTests
         Assert.NotNull(image.CurrentRoom.VacuumPosition.RenderedY);
         Assert.InRange(image.CurrentRoom.VacuumPosition.RenderedX.Value, 0, image.Width - 1);
         Assert.InRange(image.CurrentRoom.VacuumPosition.RenderedY.Value, 0, image.Height - 1);
+        if (config.HasCloudRoomConfig)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(image.CurrentRoom.Name));
+        }
     }
 
     [Fact]

@@ -136,12 +136,14 @@ public sealed class RoborockMapDataTests
     {
         var mapData = new RoborockMapData(CreateMinimalRrMapWithRobotPosition());
         RoborockRoomMapping[] mappings = [new RoborockRoomMapping { SegmentId = 16, IotId = "100001" }];
+        RoborockRoomInfo[] rooms = [new RoborockRoomInfo { Id = 100001, Name = "Keuken" }];
 
-        RoborockCurrentRoom? room = mapData.GetCurrentRoom(mappings);
+        RoborockCurrentRoom? room = mapData.GetCurrentRoom(mappings, rooms);
 
         Assert.NotNull(room);
         Assert.Equal(16, room.SegmentId);
         Assert.Equal("100001", room.IotId);
+        Assert.Equal("Keuken", room.Name);
         Assert.Equal(50, room.VacuumPosition.X);
         Assert.Equal(0, room.VacuumPosition.Y);
         Assert.Equal(1, room.VacuumPosition.RenderedX);

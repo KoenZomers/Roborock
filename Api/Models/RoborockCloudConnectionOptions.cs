@@ -39,6 +39,39 @@ public sealed class RoborockCloudConnectionOptions
     public string MqttUrl { get; init; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the Roborock RRiot <c>h</c> value used to sign cloud home requests.
+    /// </summary>
+    public string? Hash { get; init; }
+
+    /// <summary>
+    /// Gets or sets the Roborock cloud API URL from RRiot <c>r.a</c>, for example <c>https://api-eu.roborock.com</c>.
+    /// </summary>
+    public string? ApiUrl { get; init; }
+
+    /// <summary>
+    /// Gets or sets the Roborock account base URL, for example <c>https://euiot.roborock.com</c>.
+    /// </summary>
+    public string? BaseUrl { get; init; }
+
+    /// <summary>
+    /// Gets or sets the Roborock account token used to resolve the home id when <see cref="HomeId" /> is not provided.
+    /// </summary>
+    public string? UserToken { get; init; }
+
+    /// <summary>
+    /// Gets or sets the Roborock home id. When omitted, <see cref="BaseUrl" /> and <see cref="UserToken" /> are used to resolve it.
+    /// </summary>
+    public long? HomeId { get; init; }
+
+    /// <summary>
+    /// Gets whether the options include enough data to retrieve cloud room names.
+    /// </summary>
+    public bool HasHomeDataConfig =>
+        !string.IsNullOrWhiteSpace(Hash) &&
+        !string.IsNullOrWhiteSpace(ApiUrl) &&
+        (HomeId is not null || (!string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(UserToken)));
+
+    /// <summary>
     /// Gets the MQTT host parsed from <see cref="MqttUrl"/>.
     /// </summary>
     public string MqttHost => MqttUri.Host;
@@ -108,6 +141,46 @@ public sealed class RoborockCloudConnectionOptions
         if (!Uri.TryCreate(MqttUrl, UriKind.Absolute, out Uri? uri) || string.IsNullOrWhiteSpace(uri.Host) || uri.Port <= 0)
         {
             throw new ArgumentException("Roborock RRiot MQTT URL must include a scheme, host and port.", nameof(MqttUrl));
+        }
+    }
+
+    /// <summary>
+    /// Validates options required for cloud home metadata requests.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown when a required value is missing or invalid.</exception>
+    public void ValidateHomeData()
+    {
+        if (string.IsNullOrWhiteSpace(User))
+        {
+            throw new ArgumentException("Roborock RRiot user is required.", nameof(User));
+        }
+
+        if (string.IsNullOrWhiteSpace(Secret))
+        {
+            throw new ArgumentException("Roborock RRiot secret is required.", nameof(Secret));
+        }
+
+        if (string.IsNullOrWhiteSpace(Hash))
+        {
+            throw new ArgumentException("Roborock RRiot hash is required.", nameof(Hash));
+        }
+
+        if (!Uri.TryCreate(ApiUrl, UriKind.Absolute, out Uri? apiUri) || string.IsNullOrWhiteSpace(apiUri.Host))
+        {
+            throw new ArgumentException("Roborock RRiot API URL must include a scheme and host.", nameof(ApiUrl));
+        }
+
+        if (HomeId is null)
+        {
+            if (!Uri.TryCreate(BaseUrl, UriKind.Absolute, out Uri? baseUri) || string.IsNullOrWhiteSpace(baseUri.Host))
+            {
+                throw new ArgumentException("Roborock account base URL must include a scheme and host when HomeId is not set.", nameof(BaseUrl));
+            }
+
+            if (string.IsNullOrWhiteSpace(UserToken))
+            {
+                throw new ArgumentException("Roborock account token is required when HomeId is not set.", nameof(UserToken));
+            }
         }
     }
 

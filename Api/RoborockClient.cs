@@ -331,9 +331,13 @@ public sealed class RoborockClient : IAsyncDisposable
     /// Gets the current Roborock map rendered as PNG together with the matching multi-map metadata.
     /// </summary>
     /// <param name="mapSecurityKey">The Roborock RRiot <c>k</c> value used to decrypt map responses.</param>
+    /// <param name="rooms">Optional Roborock cloud rooms used to resolve friendly current-room names.</param>
     /// <param name="cancellationToken">A token that can cancel the command.</param>
     /// <returns>The rendered PNG map image and metadata for the currently selected map.</returns>
-    public async Task<RoborockMapImageWithMetadata> GetMapImageWithMetadataAsync(string mapSecurityKey, CancellationToken cancellationToken = default)
+    public async Task<RoborockMapImageWithMetadata> GetMapImageWithMetadataAsync(
+        string mapSecurityKey,
+        IReadOnlyList<RoborockRoomInfo>? rooms = null,
+        CancellationToken cancellationToken = default)
     {
         Task<RoborockStatus> statusTask = GetStatusAsync(cancellationToken);
         Task<IReadOnlyList<RoborockMapInfo>> mapsTask = GetMultiMapsAsync(cancellationToken);
@@ -346,22 +350,26 @@ public sealed class RoborockClient : IAsyncDisposable
             mapData.ToImage(),
             statusTask.Result,
             mapsTask.Result,
-            mapData.GetCurrentRoom(roomMappingsTask.Result));
+            mapData.GetCurrentRoom(roomMappingsTask.Result, rooms));
     }
 
     /// <summary>
     /// Gets the room segment currently containing the vacuum from the current Roborock map payload.
     /// </summary>
     /// <param name="mapSecurityKey">The Roborock RRiot <c>k</c> value used to decrypt map responses.</param>
+    /// <param name="rooms">Optional Roborock cloud rooms used to resolve friendly current-room names.</param>
     /// <param name="cancellationToken">A token that can cancel the command.</param>
     /// <returns>The current room, or <see langword="null" /> when the map does not contain a resolvable room.</returns>
-    public async Task<RoborockCurrentRoom?> GetCurrentRoomAsync(string mapSecurityKey, CancellationToken cancellationToken = default)
+    public async Task<RoborockCurrentRoom?> GetCurrentRoomAsync(
+        string mapSecurityKey,
+        IReadOnlyList<RoborockRoomInfo>? rooms = null,
+        CancellationToken cancellationToken = default)
     {
         Task<IReadOnlyList<RoborockRoomMapping>> roomMappingsTask = GetRoomMappingsAsync(cancellationToken);
         Task<RoborockMapData> mapDataTask = GetRawMapDataAsync(mapSecurityKey, cancellationToken);
 
         await Task.WhenAll(roomMappingsTask, mapDataTask);
-        return mapDataTask.Result.GetCurrentRoom(roomMappingsTask.Result);
+        return mapDataTask.Result.GetCurrentRoom(roomMappingsTask.Result, rooms);
     }
 
     #endregion

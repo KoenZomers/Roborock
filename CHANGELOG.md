@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file.
 
 ## Next version
 
+## [0.3.3.0] - August 23, 2026
+
+- Added Roborock cloud room-name lookup so `RoborockCurrentRoom.Name` can return the friendly room name shown by Home Assistant.
+
 ## [0.3.2.0] - August 23, 2026
 
 - Added current room resolution from RRMap robot position and room segment pixels through `RoborockCurrentRoom`, `GetCurrentRoomAsync()` and `RoborockMapImageWithMetadata.CurrentRoom`.

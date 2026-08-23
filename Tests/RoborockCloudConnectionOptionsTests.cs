@@ -34,5 +34,28 @@ public sealed class RoborockCloudConnectionOptionsTests
         Assert.Equal($"rr/m/o/rr-user/{options.MqttUsername}/device-1", options.SubscribeTopic);
     }
 
+    [Fact]
+    /// <summary>
+    /// Verifies that cloud home data can be configured with a known home id.
+    /// </summary>
+    public void HasHomeDataConfig_WhenHomeIdAndRriotHashConfigured_ReturnsTrue()
+    {
+        var options = new RoborockCloudConnectionOptions
+        {
+            Duid = "device-1",
+            LocalKey = "1234567890123456",
+            User = "rr-user",
+            Secret = "rr-secret",
+            Key = "rr-key",
+            MqttUrl = "ssl://mqtt.example.com:8883",
+            Hash = "rr-hash",
+            ApiUrl = "https://api.example.com",
+            HomeId = 12345
+        };
+
+        Assert.True(options.HasHomeDataConfig);
+        options.ValidateHomeData();
+    }
+
     private static string Md5Hex(string value) => Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 }

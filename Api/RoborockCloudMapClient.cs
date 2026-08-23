@@ -69,14 +69,15 @@ public sealed class RoborockCloudMapClient
         Task<RoborockStatus> statusTask = metadataClient.GetStatusAsync(cancellationToken);
         Task<IReadOnlyList<RoborockMapInfo>> mapsTask = metadataClient.GetMultiMapsAsync(cancellationToken);
         Task<IReadOnlyList<RoborockRoomMapping>> roomMappingsTask = metadataClient.GetRoomMappingsAsync(cancellationToken);
+        Task<IReadOnlyList<RoborockRoomInfo>> roomsTask = GetRoomsAsync(cancellationToken);
 
-        await Task.WhenAll(mapDataTask, statusTask, mapsTask, roomMappingsTask);
+        await Task.WhenAll(mapDataTask, statusTask, mapsTask, roomMappingsTask, roomsTask);
         RoborockMapData mapData = mapDataTask.Result;
         return RoborockMapImageWithMetadata.Create(
             mapData.ToImage(),
             statusTask.Result,
             mapsTask.Result,
-            mapData.GetCurrentRoom(roomMappingsTask.Result));
+            mapData.GetCurrentRoom(roomMappingsTask.Result, roomsTask.Result));
     }
 
     /// <summary>
@@ -91,9 +92,26 @@ public sealed class RoborockCloudMapClient
 
         Task<RoborockMapData> mapDataTask = GetRawMapDataAsync(cancellationToken);
         Task<IReadOnlyList<RoborockRoomMapping>> roomMappingsTask = metadataClient.GetRoomMappingsAsync(cancellationToken);
+        Task<IReadOnlyList<RoborockRoomInfo>> roomsTask = GetRoomsAsync(cancellationToken);
 
-        await Task.WhenAll(mapDataTask, roomMappingsTask);
-        return mapDataTask.Result.GetCurrentRoom(roomMappingsTask.Result);
+        await Task.WhenAll(mapDataTask, roomMappingsTask, roomsTask);
+        return mapDataTask.Result.GetCurrentRoom(roomMappingsTask.Result, roomsTask.Result);
+    }
+
+    /// <summary>
+    /// Gets the friendly rooms configured for the Roborock home when cloud home options are available.
+    /// </summary>
+    /// <param name="cancellationToken">A token that can cancel the request.</param>
+    /// <returns>The configured Roborock cloud rooms, or an empty list when cloud home options are not configured.</returns>
+    public async Task<IReadOnlyList<RoborockRoomInfo>> GetRoomsAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_options.HasHomeDataConfig)
+        {
+            return [];
+        }
+
+        using var homeClient = new RoborockCloudHomeClient(_options);
+        return await homeClient.GetRoomsAsync(cancellationToken);
     }
 
     private async Task<byte[]> SendMapCommandAsync(

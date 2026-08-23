@@ -85,7 +85,7 @@ public sealed class RoborockMapInfoTests
         RoborockStatus status = RoborockStatus.FromJson(statusDocument.RootElement);
         var image = new RoborockMapImage([1, 2, 3], 1, 1);
         RoborockMapInfo[] maps = [new RoborockMapInfo { MapFlag = 2, Name = "Zolder" }];
-        var room = new RoborockCurrentRoom(16, "100001", new RoborockMapPosition(50, 0, 90));
+        var room = new RoborockCurrentRoom(16, "100001", "Keuken", new RoborockMapPosition(50, 0, 90));
 
         RoborockMapImageWithMetadata result = RoborockMapImageWithMetadata.Create(image, status, maps, room);
 
@@ -93,5 +93,6 @@ public sealed class RoborockMapInfoTests
         Assert.Same(room, currentRoom);
         Assert.Equal(16, currentRoom.SegmentId);
         Assert.Equal("100001", currentRoom.IotId);
+        Assert.Equal("Keuken", currentRoom.Name);
     }
 }

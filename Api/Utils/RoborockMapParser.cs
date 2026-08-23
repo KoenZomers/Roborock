@@ -22,8 +22,12 @@ internal static class RoborockMapParser
     /// </summary>
     /// <param name="content">The decrypted and decompressed RRMap payload bytes.</param>
     /// <param name="roomMappings">Room segment to IoT room mappings.</param>
+    /// <param name="rooms">Optional Roborock cloud rooms used to resolve friendly room names.</param>
     /// <returns>The current room, or <see langword="null" /> when the map does not expose a resolvable room.</returns>
-    public static RoborockCurrentRoom? GetCurrentRoom(byte[] content, IReadOnlyList<RoborockRoomMapping>? roomMappings = null)
+    public static RoborockCurrentRoom? GetCurrentRoom(
+        byte[] content,
+        IReadOnlyList<RoborockRoomMapping>? roomMappings = null,
+        IReadOnlyList<RoborockRoomInfo>? rooms = null)
     {
         ParsedMap parsedMap = Parse(content);
         if (parsedMap.Image is null || parsedMap.VacuumPosition is null)
@@ -38,7 +42,8 @@ internal static class RoborockMapParser
         }
 
         string? iotId = roomMappings?.FirstOrDefault(mapping => mapping.SegmentId == segmentId.Value)?.IotId;
-        return new RoborockCurrentRoom(segmentId.Value, iotId, parsedMap.VacuumPosition);
+        string? name = iotId is null ? null : rooms?.FirstOrDefault(room => room.IotId == iotId)?.Name;
+        return new RoborockCurrentRoom(segmentId.Value, iotId, name, parsedMap.VacuumPosition);
     }
 
     /// <summary>

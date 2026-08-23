@@ -40,7 +40,7 @@ Console.WriteLine($"Last clean: {properties.LastCleanRecord?.BeginDateTime} - {p
 - `get_consumable` for brush/filter/sensor usage and calculated time-left values.
 - `get_clean_record` for the newest record from the clean summary.
 
-Home Assistant derives the current room from parsed map content (`vacuum_room`) plus room metadata from `get_room_mapping`/cloud home data; it is not returned directly by `get_status`. This library exposes the current map flag through `RoborockStatus.CurrentMap` and typed room mappings through `GetRoomMappingsAsync()`, but room names still require account home-data from outside the local status command.
+Home Assistant derives the current room from parsed map content (`vacuum_room`) plus room metadata from `get_room_mapping`/cloud home data; it is not returned directly by `get_status`. This library exposes the current map flag through `RoborockStatus.CurrentMap`, typed room mappings through `GetRoomMappingsAsync()` and friendly room names through `RoborockCurrentRoom.Name` when Roborock cloud home metadata is configured.
 
 Optional protocol diagnostics can be captured with a trace callback:
 
@@ -81,7 +81,7 @@ await File.WriteAllBytesAsync("roborock-map-direct.png", image.PngContent);
 
 RoborockMapImageWithMetadata namedImage = await client.GetMapImageWithMetadataAsync(mapSecurityKey: "your-rriot-k-value");
 Console.WriteLine($"Current map: {namedImage.MapFlag} {namedImage.Name}");
-Console.WriteLine($"Current room segment: {namedImage.CurrentRoom?.SegmentId}");
+Console.WriteLine($"Current room: {namedImage.CurrentRoom?.Name} ({namedImage.CurrentRoom?.SegmentId})");
 Console.WriteLine($"Vacuum PNG position: {namedImage.CurrentRoom?.VacuumPosition.RenderedX}, {namedImage.CurrentRoom?.VacuumPosition.RenderedY}");
 
 RoborockCurrentRoom? currentRoom = await client.GetCurrentRoomAsync(mapSecurityKey: "your-rriot-k-value");
@@ -100,7 +100,11 @@ var cloudMapClient = new RoborockCloudMapClient(new RoborockCloudConnectionOptio
     User = "your-rriot-u-value",
     Secret = "your-rriot-s-value",
     Key = "your-rriot-k-value",
-    MqttUrl = "ssl://mqtt-region.example:8883"
+    MqttUrl = "ssl://mqtt-region.example:8883",
+    Hash = "your-rriot-h-value",
+    ApiUrl = "https://api-region.roborock.com",
+    BaseUrl = "https://account-region.roborock.com",
+    UserToken = "your-account-token"
 });
 
 RoborockMapImage cloudImage = await cloudMapClient.GetMapImageAsync();
@@ -110,7 +114,7 @@ await using var metadataClient = new RoborockClient("192.168.1.50", "your-local-
 await metadataClient.ConnectAsync();
 RoborockMapImageWithMetadata namedCloudImage = await cloudMapClient.GetMapImageWithMetadataAsync(metadataClient);
 Console.WriteLine($"Current cloud map: {namedCloudImage.MapFlag} {namedCloudImage.Name}");
-Console.WriteLine($"Current cloud room segment: {namedCloudImage.CurrentRoom?.SegmentId}");
+Console.WriteLine($"Current cloud room: {namedCloudImage.CurrentRoom?.Name} ({namedCloudImage.CurrentRoom?.SegmentId})");
 Console.WriteLine($"Vacuum PNG position: {namedCloudImage.CurrentRoom?.VacuumPosition.RenderedX}, {namedCloudImage.CurrentRoom?.VacuumPosition.RenderedY}");
 
 RoborockCurrentRoom? currentCloudRoom = await cloudMapClient.GetCurrentRoomAsync(metadataClient);
@@ -137,9 +141,47 @@ For unsupported commands, use the raw RPC API:
 JsonElement result = await client.SendCommandAsync("get_status");
 ```
 
+## Configuration
+
+The file `Tests\roborock.json` contains all the fields that need configuration and looks like this:
+
+```json
+{
+  "duid": "",
+  "localKey": "",
+  "mapSecurityKey": "",
+  "rriotUser": "",
+  "rriotSecret": "",
+  "rriotKey": "",
+  "mqttUrl": "",
+  "rriotHash": "",
+  "apiUrl": "",
+  "baseUrl": "",
+  "userToken": "",
+  "homeId": null,
+  "model": "",
+  "host": "",
+  "port": 58867
+}
+```
+
+I found it to be the easiest way to retrieve these values by quickly and easily spinning up a Home Assist docker instance using something like:
+
+```
+docker run -d --name homeassistant --restart=unless-stopped -v C:\HomeAssistant\Config:/config -p 8123:8123 ghcr.io/home-assistant/home-assistant:stable
+```
+
+Connecting using your browser to http://localhost:8123, adding the Roborock to Home Assist, creating a bash session on the instance using:
+
+```
+docker exec -it homeassistant bash
+```
+
+And then asking an AI to create a Python script to run inside the bash session on Home Assist to pull out the values needed for the config file. It was a breeze to do so. These values do not seem to be visually exposed through the Home Assist web interface.
+
 ## Tests
 
-The test project reads local device settings from `Tests\roborock.json`, which is committed with empty values to document the expected shape. Put machine-specific credentials in `Tests\roborock.local.json`; this file overrides the default config and is intentionally ignored by `.gitignore`. Add `mapSecurityKey` with the Roborock RRiot `k` value to enable the local raw map payload integration test. Add `rriotUser`, `rriotSecret`, `rriotKey` and `mqttUrl` to enable the cloud MQTT map integration test.
+The test project reads local device settings from `Tests\roborock.json`, which is committed with empty values to document the expected shape. Put machine-specific credentials in `Tests\roborock.local.json`; this file overrides the default config and is intentionally ignored by `.gitignore`. Add `mapSecurityKey` with the Roborock RRiot `k` value to enable the local raw map payload integration test. Add `rriotUser`, `rriotSecret`, `rriotKey` and `mqttUrl` to enable the cloud MQTT map integration test. Add `rriotHash`, `apiUrl`, plus either `homeId` or `baseUrl` and `userToken`, to resolve friendly cloud room names.
 
 Live tests are opt-in so normal test runs do not require the vacuum to be reachable:
 

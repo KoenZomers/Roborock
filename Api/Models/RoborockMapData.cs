@@ -50,8 +50,11 @@ public sealed class RoborockMapData
     /// Resolves the room segment currently containing the vacuum from the Roborock map payload.
     /// </summary>
     /// <param name="roomMappings">Optional room segment to IoT room mappings returned by <c>get_room_mapping</c>.</param>
+    /// <param name="rooms">Optional Roborock cloud rooms used to resolve friendly room names.</param>
     /// <returns>The current room, or <see langword="null" /> when the map does not contain a resolvable room.</returns>
     /// <exception cref="InvalidDataException">Thrown when the map payload is not a valid RRMap file.</exception>
-    public RoborockCurrentRoom? GetCurrentRoom(IReadOnlyList<RoborockRoomMapping>? roomMappings = null) =>
-        RoborockMapParser.GetCurrentRoom(Content, roomMappings);
+    public RoborockCurrentRoom? GetCurrentRoom(
+        IReadOnlyList<RoborockRoomMapping>? roomMappings = null,
+        IReadOnlyList<RoborockRoomInfo>? rooms = null) =>
+        RoborockMapParser.GetCurrentRoom(Content, roomMappings, rooms);
 }
